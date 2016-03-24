@@ -1,5 +1,5 @@
 /*
-Copyright 2015 The Kubernetes Authors All rights reserved.
+Copyright 2016 The Kubernetes Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// deepcopy-gen is a tool for auto-generating DeepCopy functions.
+// conversion-gen is a tool for auto-generating Conversion functions.
 //
 // Structs in the input directories with the below line in their comments
 // will be ignored during generation.
-// // +gencopy=false
+// // +genconversion=false
 package main
 
 import (
 	"k8s.io/kubernetes/cmd/libs/go2idl/args"
-	"k8s.io/kubernetes/cmd/libs/go2idl/deepcopy-gen/generators"
+	"k8s.io/kubernetes/cmd/libs/go2idl/conversion-gen/generators"
 
 	"github.com/golang/glog"
 )
@@ -33,20 +33,9 @@ func main() {
 
 	// Override defaults. These are Kubernetes specific input locations.
 	arguments.InputDirs = []string{
-		"k8s.io/kubernetes/pkg/api",
 		"k8s.io/kubernetes/pkg/api/v1",
-		"k8s.io/kubernetes/pkg/apis/authorization",
-		"k8s.io/kubernetes/pkg/apis/authorization/v1beta1",
-		"k8s.io/kubernetes/pkg/apis/autoscaling",
-		"k8s.io/kubernetes/pkg/apis/autoscaling/v1",
-		"k8s.io/kubernetes/pkg/apis/batch",
-		"k8s.io/kubernetes/pkg/apis/batch/v1",
-		"k8s.io/kubernetes/pkg/apis/componentconfig",
-		"k8s.io/kubernetes/pkg/apis/componentconfig/v1alpha1",
-		"k8s.io/kubernetes/pkg/apis/extensions",
-		"k8s.io/kubernetes/pkg/apis/extensions/v1beta1",
-		"k8s.io/kubernetes/pkg/apis/metrics",
-		"k8s.io/kubernetes/pkg/apis/metrics/v1alpha1",
+		"k8s.io/kubernetes/pkg/api",
+		"k8s.io/kubernetes/pkg/runtime",
 	}
 
 	if err := arguments.Execute(

@@ -34,7 +34,7 @@ type genClientset struct {
 	groupVersions      []unversioned.GroupVersion
 	typedClientPath    string
 	outputPackage      string
-	imports            *generator.ImportTracker
+	imports            namer.ImportTracker
 	clientsetGenerated bool
 }
 
@@ -59,7 +59,7 @@ func (g *genClientset) Imports(c *generator.Context) (imports []string) {
 		group := normalization.Group(gv.Group)
 		version := normalization.Version(gv.Version)
 		typedClientPath := filepath.Join(g.typedClientPath, group, version)
-		imports = append(imports, fmt.Sprintf("%s_%s \"%s\"", group, version, typedClientPath))
+		imports = append(imports, fmt.Sprintf("%s%s \"%s\"", version, group, typedClientPath))
 		imports = append(imports, "github.com/golang/glog")
 	}
 	return
@@ -69,7 +69,8 @@ func (g *genClientset) GenerateType(c *generator.Context, t *types.Type, w io.Wr
 	// TODO: We actually don't need any type information to generate the clientset,
 	// perhaps we can adapt the go2ild framework to this kind of usage.
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
-	const pkgUnversioned = "k8s.io/kubernetes/pkg/client/unversioned"
+	const pkgDiscovery = "k8s.io/kubernetes/pkg/client/typed/discovery"
+	const pkgRESTClient = "k8s.io/kubernetes/pkg/client/restclient"
 
 	type arg struct {
 		Group       string
@@ -80,19 +81,19 @@ func (g *genClientset) GenerateType(c *generator.Context, t *types.Type, w io.Wr
 	for _, gv := range g.groupVersions {
 		group := normalization.Group(gv.Group)
 		version := normalization.Version(gv.Version)
-		allGroups = append(allGroups, arg{namer.IC(group), group + "_" + version})
+		allGroups = append(allGroups, arg{namer.IC(group), version + group})
 	}
 
 	m := map[string]interface{}{
 		"allGroups":                        allGroups,
-		"Config":                           c.Universe.Type(types.Name{Package: pkgUnversioned, Name: "Config"}),
-		"DefaultKubernetesUserAgent":       c.Universe.Function(types.Name{Package: pkgUnversioned, Name: "DefaultKubernetesUserAgent"}),
-		"RESTClient":                       c.Universe.Type(types.Name{Package: pkgUnversioned, Name: "RESTClient"}),
-		"DiscoveryInterface":               c.Universe.Type(types.Name{Package: pkgUnversioned, Name: "DiscoveryInterface"}),
-		"DiscoveryClient":                  c.Universe.Type(types.Name{Package: pkgUnversioned, Name: "DiscoveryClient"}),
-		"NewDiscoveryClientForConfig":      c.Universe.Function(types.Name{Package: pkgUnversioned, Name: "NewDiscoveryClientForConfig"}),
-		"NewDiscoveryClientForConfigOrDie": c.Universe.Function(types.Name{Package: pkgUnversioned, Name: "NewDiscoveryClientForConfigOrDie"}),
-		"NewDiscoveryClient":               c.Universe.Function(types.Name{Package: pkgUnversioned, Name: "NewDiscoveryClient"}),
+		"Config":                           c.Universe.Type(types.Name{Package: pkgRESTClient, Name: "Config"}),
+		"DefaultKubernetesUserAgent":       c.Universe.Function(types.Name{Package: pkgRESTClient, Name: "DefaultKubernetesUserAgent"}),
+		"RESTClient":                       c.Universe.Type(types.Name{Package: pkgRESTClient, Name: "RESTClient"}),
+		"DiscoveryInterface":               c.Universe.Type(types.Name{Package: pkgDiscovery, Name: "DiscoveryInterface"}),
+		"DiscoveryClient":                  c.Universe.Type(types.Name{Package: pkgDiscovery, Name: "DiscoveryClient"}),
+		"NewDiscoveryClientForConfig":      c.Universe.Function(types.Name{Package: pkgDiscovery, Name: "NewDiscoveryClientForConfig"}),
+		"NewDiscoveryClientForConfigOrDie": c.Universe.Function(types.Name{Package: pkgDiscovery, Name: "NewDiscoveryClientForConfigOrDie"}),
+		"NewDiscoveryClient":               c.Universe.Function(types.Name{Package: pkgDiscovery, Name: "NewDiscoveryClient"}),
 	}
 	sw.Do(clientsetInterfaceTemplate, m)
 	sw.Do(clientsetTemplate, m)
